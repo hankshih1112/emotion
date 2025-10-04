@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+
+<head>
+    <meta charset="utf-8" />
+    <title>喜歡的原因</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <style>
+        :root {
+            --bg: #f5f5f5;
+            --font: 'Microsoft JhengHei', sans-serif;
+        }
+
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            background: var(--bg);
+            font-family: var(--font);
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            padding: 18px;
+            box-sizing: border-box;
+            min-height: 100vh;
+            overflow-y: auto;
+        }
+
+        /* 全域移除所有可見 focus 樣式（不論裝置） */
+        *:focus {
+            outline: none !important;
+            box-shadow: none !important;
+        }
+
+        /* 移除觸控高亮與長方形框 */
+        * {
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+            touch-action: manipulation;
+            box-sizing: border-box;
+        }
+
+        .wrap {
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+            max-width: 1200px;
+            width: 100%;
+            justify-content: center;
+            margin-bottom: 40px;
+            /* 確保底部有足夠空間 */
+            padding-bottom: 40px;
+        }
+
+        .wrap.stacked {
+            flex-direction: column;
+            align-items: center;
+            min-height: auto;
+        }
+
+        .left {
+            flex: 0 0 auto;
+            width: 560px;
+            max-width: 60vw;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        svg {
+            width: 100%;
+            height: auto;
+            aspect-ratio: 1/1;
+            display: block;
+        }
+
+        .info {
+            flex: 1 1 360px;
+            min-width: 320px;
+            background: #fff;
+            padding: 18px;
+            border-radius: 10px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+            font-size: 20px;
+            line-height: 1.8;
+            white-space: pre-wrap;
+            /* 移除 max-height 和 overflow 限制，讓內容自然延伸 */
+            position: relative;
+        }
+
+        .grad-text {
+            font-weight: 700;
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 1px 0 rgba(255, 255, 255, 0.03), 0 2px 6px rgba(0, 0, 0, 0.12);
+            line-height: 1.8;
+        }
+
+        /* SVG 內百分比文字（viewBox 單位） */
+        .slice-label {
+            font-size: 1.6px;
+            font-weight: 700;
+            text-anchor: middle;
+            dominant-baseline: middle;
+            pointer-events: none;
+        }
+
+        /* 互動樣式（放大/陰影，不是 focus 框） */
+        svg path {
+            transition: transform 280ms cubic-bezier(.2, .9, .3, 1), filter 280ms;
+            transform-origin: 20px 20px;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+            outline: none;
+        }
+
+        .media-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            width: 100%;
+            height: auto;
+            padding-bottom: 20px;
+            position: relative;
+        }
+
+        .media-container img,
+        .media-container video {
+            width: auto;
+            height: auto;
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: none;
+            display: block;
+        }
+
+        /* 多媒體內容容器 */
+        .media-container {
+            width: 100%;
+            margin: 15px 0;
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+            opacity: 0;
+            transform: translate(-20px, -20px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .media-container.show {
+            opacity: 1;
+            transform: translate(0, 0);
+        }
+
+        .media-container img,
+        .media-container video {
+            width: auto;
+            height: auto;
+            display: block;
+            max-height: 600px;
+            object-fit: cover;
+            padding-bottom: 40px;
+        }
+
+        .media-container .media-caption {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 10px;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        .dev-info {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            font-size: 14px;
+            max-width: 300px;
+            z-index: 10;
+            color: #333;
+        }
+
+        .dev-info h3 {
+            margin-top: 0;
+            color: #1A535C;
+        }
+
+        .dev-info ul {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+
+        @media (max-width:900px) {
+            .left {
+                width: 380px;
+                max-width: 92vw;
+            }
+
+            .info {
+                min-width: 92vw;
+                font-size: 18px;
+                /* 移除移動端的max-height限制 */
+            }
+
+            .dev-info {
+                position: relative;
+                top: auto;
+                left: auto;
+                margin-bottom: 15px;
+                max-width: 100%;
+            }
+        }
+        
+        /* 氣泡動畫樣式 */
+        .bubble {
+            position: absolute;
+            bottom: -50px;
+            font-size: 24px;
+            opacity: 0;
+            animation: rise 8s ease-in-out forwards;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.7);
+            pointer-events: none;
+            z-index: 100;
+        }
+        
+        @keyframes rise {
+            0% {
+                transform: translateY(0) translateX(0) rotate(0deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.8;
+            }
+            90% {
+                opacity: 0.7;
+            }
+            100% {
+                transform: translateY(-100vh) translateX(var(--translateX)) rotate(360deg);
+                opacity: 0;
+            }
+        }
+        
+        #bubble-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 999;
+            overflow: hidden;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="wrap" class="wrap">
+        <div class="left">
+            <!-- 圓餅圖資料容器（隱藏） -->
+            <div id="pieData" style="display: none;">
+                <div data-label="就如照片所說的內容" data-value="50" data-color="#FF7F7F"
+                     data-desc="• 雖然圖片上某些已經不是主要原因"
+                     data-emojis="😊,😌,😶,😄,😏">
+                    <div class="media-content">
+                        <img src="https://i.postimg.cc/BQNBGKf3/4d79f4ad-6060-4793-a573-953e6df7e7a5.jpg" alt="照片">
+                        <div class="media-caption">圖片</div>
+                    </div>
+                </div>
+                <div data-label="我的技術" data-value="35" data-color="#7FB3FF"
+                     data-desc="• 我的個人技術問題&#10;• 沒有人會在意&#10;• 我自己覺得喜歡跟沒喜歡差不多，頂多只是差一點點(？"
+                     data-emojis="🤔,😅,😎">
+                </div>
+                <div data-label="自我評價" data-value="10" data-color="#FFD966"
+                     data-desc="• 我也沒多好，她可以有更好的選擇，反正她選擇那麼多，我也只是其中一個而已"
+                     data-emojis="😢,😞">
+                </div>
+                <div data-label="大家的眼光" data-value="5" data-color="#5A7D9A"
+                     data-desc="• 大部分的人幾乎都覺得我不行，她應該也不太會喜歡我"
+                     data-emojis="😟,😣,😭,😖">
+                </div>
+            </div>
+
+            <!-- 圓餅圖 SVG -->
+            <svg id="pieChart" viewBox="0 0 40 40" role="img" aria-label="互動圓餅圖" tabindex="0">
+                <!-- 扇形將由 JavaScript 動態生成 -->
+            </svg>
+        </div>
+
+        <div id="infoBox" class="info" aria-live="polite" tabindex="0"></div>
+    </div>
+
+    <!-- 氣泡容器 -->
+    <div id="bubble-container"></div>
+
+    <script>
+        // ======================
+        // 工具函數
+        // ======================
+        function hexToRgb(hex) {
+            hex = String(hex || '').replace('#', '').trim();
+            if (hex.length === 3) hex = hex.split('').map(c => c + c).join('');
+            const r = parseInt(hex.substring(0, 2), 16) || 0;
+            const g = parseInt(hex.substring(2, 4), 16) || 0;
+            const b = parseInt(hex.substring(4, 6), 16) || 0;
+            return { r, g, b };
+        }
+
+        function rgbToHsl(r, g, b) {
+            r /= 255; g /= 255; b /= 255;
+            const max = Math.max(r, g, b), min = Math.min(r, g, b);
+            let h = 0, s = 0;
+            const l = (max + min) / 2;
+            if (max !== min) {
+                const d = max - min;
+                s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+                switch (max) {
+                    case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+                    case g: h = (b - r) / d + 2; break;
+                    case b: h = (r - g) / d + 4; break;
+                }
+                h *= 60;
+            }
+            return { h, s, l };
+        }
+
+        function hslToHex(h, s, l) {
+            h /= 360;
+            let r, g, b;
+            if (s === 0) r = g = b = l;
+            else {
+                function hue2rgb(p, q, t) {
+                    if (t < 0) t += 1;
+                    if (t > 1) t -= 1;
+                    if (t < 1 / 6) return p + (q - p) * 6 * t;
+                    if (t < 1 / 2) return q;
+                    if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+                    return p;
+                }
+                const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+                const p = 2 * l - q;
+                r = hue2rgb(p, q, h + 1 / 3);
+                g = hue2rgb(p, q, h);
+                b = hue2rgb(p, q, h - 1 / 3);
+            }
+            const toHex = x => ('0' + Math.round(x * 255).toString(16)).slice(-2);
+            return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+        }
+
+        function darkenHex(hex, amount) {
+            const { r, g, b } = hexToRgb(hex);
+            const hsl = rgbToHsl(r, g, b);
+            const newL = Math.max(0, hsl.l - (amount || 0.16));
+            return hslToHex(hsl.h, hsl.s, newL);
+        }
+
+        function getReadableTextColor(hex) {
+            const { r, g, b } = hexToRgb(hex);
+            // 相對亮度簡化計算
+            const lum = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+            return lum < 0.55 ? '#ffffff' : '#111827';
+        }
+
+        // 將極座標轉換為笛卡爾座標
+        function polarToCartesian(centerX, centerY, radius, angleInDegrees) {
+            const angleInRadians = (angleInDegrees - 90) * Math.PI / 180.0;
+            return {
+                x: centerX + (radius * Math.cos(angleInRadians)),
+                y: centerY + (radius * Math.sin(angleInRadians))
+            };
+        }
+
+        // 描述圓弧的SVG路徑
+        function describeArc(x, y, radius, startAngle, endAngle) {
+            const start = polarToCartesian(x, y, radius, endAngle);
+            const end = polarToCartesian(x, y, radius, startAngle);
+            const largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1";
+            const d = [
+                "M", start.x, start.y,
+                "A", radius, radius, 0, largeArcFlag, 0, end.x, end.y,
+                "L", x, y,
+                "Z"
+            ].join(" ");
+            return d;
+        }
+
+        // 計算兩邊中垂線與角平分線的交點
+        function findThreeLinesIntersection(startAngle, endAngle) {
+            // 計算扇形兩條邊的角度
+            const angle = endAngle - startAngle;
+            const midAngle = (startAngle + endAngle) / 2;
+
+            // 計算扇形兩條邊的單位向量
+            const startRad = (startAngle - 90) * Math.PI / 180;
+            const endRad = (endAngle - 90) * Math.PI / 180;
+
+            const startVec = {
+                x: Math.cos(startRad),
+                y: Math.sin(startRad)
+            };
+
+            const endVec = {
+                x: Math.cos(endRad),
+                y: Math.sin(endRad)
+            };
+
+            // 計算兩條邊的中垂線方向向量
+            const perpStartVec = {
+                x: -startVec.y,
+                y: startVec.x
+            };
+
+            const perpEndVec = {
+                x: -endVec.y,
+                y: endVec.x
+            };
+
+            // 計算角平分線的單位向量
+            const bisectorRad = (midAngle - 90) * Math.PI / 180;
+            const bisectorVec = {
+                x: Math.cos(bisectorRad),
+                y: Math.sin(bisectorRad)
+            };
+
+            // 計算中垂線與角平分線的交點
+            // 使用數值方法尋找三條線的交點
+
+            // 初始化參數
+            let t = 0;
+            let bestT = 0;
+            let minDistance = Infinity;
+
+            // 沿著角平分線搜尋最佳交點
+            for (let i = 0; i <= 100; i++) {
+                t = i / 100 * 18; // 從0到18（圓半徑）的距離
+
+                // 計算角平分線上的點
+                const point = {
+                    x: 20 + t * bisectorVec.x,
+                    y: 20 + t * bisectorVec.y
+                };
+
+                // 計算該點到兩條中垂線的距離
+                const distToPerpStart = Math.abs(
+                    (point.x - 20) * perpStartVec.x +
+                    (point.y - 20) * perpStartVec.y
+                );
+
+                const distToPerpEnd = Math.abs(
+                    (point.x - 20) * perpEndVec.x +
+                    (point.y - 20) * perpEndVec.y
+                );
+
+                // 計算總距離（我們希望找到使兩個距離都最小的點）
+                const totalDistance = distToPerpStart + distToPerpEnd;
+
+                if (totalDistance < minDistance) {
+                    minDistance = totalDistance;
+                    bestT = t;
+                }
+            }
+
+            // 根據扇形大小微調最佳距離
+            let adjustedT = bestT;
+
+            if (angle < 15) {
+                adjustedT = Math.max(adjustedT, 12); // 極小扇形，文字稍微往外
+            } else if (angle < 30) {
+                adjustedT = Math.max(adjustedT, 10);
+            } else if (angle < 60) {
+                adjustedT = Math.max(adjustedT, 8);
+            } else if (angle <= 180) {
+                adjustedT = Math.max(adjustedT, 6); // 扇形大，文字往內
+            } else {
+                adjustedT = Math.max(adjustedT, 10); // 其他大於半圓的情況
+            }
+
+            // 返回最終位置
+            return {
+                x: 20 + adjustedT * bisectorVec.x,
+                y: 20 + adjustedT * bisectorVec.y
+            };
+        }
+
+        // ======================
+        // 氣泡動畫功能
+        // ======================
+        function createBubbles(emojis, totalCount) {
+            const container = document.getElementById('bubble-container');
+
+            // 清空容器
+            container.innerHTML = '';
+
+            // 計算每個表情的數量
+            const emojiCount = emojis.length;
+            const countPerEmoji = Math.floor(totalCount / emojiCount);
+            const remainder = totalCount % emojiCount;
+
+            // 建立表情陣列，確保均勻分配
+            const emojiArray = [];
+            for (let i = 0; i < emojiCount; i++) {
+                const count = (i < remainder) ? countPerEmoji + 1 : countPerEmoji;
+                for (let j = 0; j < count; j++) {
+                    emojiArray.push(emojis[i]);
+                }
+            }
+
+            // 打亂陣列順序
+            shuffleArray(emojiArray);
+
+            // 建立氣泡
+            emojiArray.forEach(emoji => {
+                createBubble(emoji);
+            });
+        }
+
+        function createBubble(emoji) {
+            const container = document.getElementById('bubble-container');
+            const bubble = document.createElement('div');
+            bubble.className = 'bubble';
+            bubble.textContent = emoji;
+
+            // 隨機大小
+            const size = Math.random() * 20 + 20; // 20px 到 40px
+            bubble.style.fontSize = `${size}px`;
+
+            // 隨機水平位置
+            const left = Math.random() * 100;
+            bubble.style.left = `${left}%`;
+
+            // 隨機動畫持續時間
+            const duration = Math.random() * 5 + 5; // 5秒 到 10秒
+            bubble.style.animationDuration = `${duration}s`;
+
+            // 隨機動畫延遲
+            const delay = Math.random() * 2;
+            bubble.style.animationDelay = `${delay}s`;
+
+            // 隨機水平移動
+            const translateX = (Math.random() - 0.5) * 100;
+            bubble.style.setProperty('--translateX', `${translateX}px`);
+
+            // 添加自定義動畫
+            const keyframes = `
+                @keyframes rise-${Date.now()} {
+                    0% {
+                        transform: translateY(0) translateX(0) rotate(0deg);
+                        opacity: 0;
+                    }
+                    10% {
+                        opacity: 0.8;
+                    }
+                    90% {
+                        opacity: 0.7;
+                    }
+                    100% {
+                        transform: translateY(-100vh) translateX(var(--translateX)) rotate(360deg);
+                        opacity: 0;
+                    }
+                }
+            `;
+
+            const style = document.createElement('style');
+            style.textContent = keyframes;
+            document.head.appendChild(style);
+
+            bubble.style.animationName = `rise-${Date.now()}`;
+
+            container.appendChild(bubble);
+
+            // 動畫結束後移除元素
+            setTimeout(() => {
+                if (bubble.parentNode) {
+                    bubble.parentNode.removeChild(bubble);
+                }
+            }, (duration + delay) * 1000);
+        }
+
+        // 洗牌演算法 - 打亂陣列順序
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        // ======================
+        // 主要程式邏輯
+        // ======================
+        const svg = document.getElementById('pieChart');
+        const infoBox = document.getElementById('infoBox');
+        const wrap = document.getElementById('wrap');
+        const left = document.querySelector('.left');
+
+        // 從HTML元素讀取圓餅圖資料
+        function getPieData() {
+            const pieDataElements = document.querySelectorAll('#pieData > div');
+            const pieData = [];
+
+            pieDataElements.forEach(element => {
+                const mediaContent = element.querySelector('.media-content');
+                pieData.push({
+                    label: element.getAttribute('data-label'),
+                    value: parseInt(element.getAttribute('data-value')),
+                    color: element.getAttribute('data-color'),
+                    desc: element.getAttribute('data-desc'),
+                    emojis: element.getAttribute('data-emojis') ? element.getAttribute('data-emojis').split(',') : [],
+                    media: mediaContent ? mediaContent.innerHTML : null
+                });
+            });
+
+            return pieData;
+        }
+
+        // 繪製圓餅圖
+        function drawPieChart() {
+            // 清空SVG
+            svg.innerHTML = '';
+
+            // 從HTML元素獲取資料
+            const pieData = getPieData();
+
+            // 驗證數據總和
+            const total = pieData.reduce((sum, item) => sum + item.value, 0);
+            if (total !== 100) {
+                console.warn(`警告：圓餅圖數據總和為 ${total}，不是 100。請調整 pieData 中的 value 值。`);
+            }
+
+            // 繪製每個扇形
+            let currentAngle = 0;
+            pieData.forEach((item, index) => {
+                const angle = (item.value / total) * 360;
+                const startAngle = currentAngle;
+                const endAngle = currentAngle + angle;
+
+                // 創建扇形路徑
+                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                path.setAttribute('d', describeArc(20, 20, 18, startAngle, endAngle));
+                path.setAttribute('fill', item.color);
+                path.setAttribute('data-label', item.label);
+                path.setAttribute('data-value', item.value);
+                path.setAttribute('data-desc', item.desc);
+                path.setAttribute('data-emojis', item.emojis.join(','));
+                path.setAttribute('data-media', item.media || '');
+                path.setAttribute('tabindex', '0');
+                path.setAttribute('role', 'button');
+
+                // 計算三條線的交點
+                const intersectionPoint = findThreeLinesIntersection(startAngle, endAngle);
+
+                // 添加百分比標籤
+                const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                label.classList.add('slice-label');
+                label.setAttribute('x', intersectionPoint.x);
+                label.setAttribute('y', intersectionPoint.y);
+                label.textContent = `${Math.round((item.value / total) * 100)}%`;
+                label.setAttribute('fill', getReadableTextColor(item.color));
+
+                // 對於極小的扇形，稍微調整文字位置以避免重疊
+                if (angle < 10) {
+                    // 將文字稍微向外移動，避免與圓心重疊
+                    const adjustedPos = polarToCartesian(20, 20, 16, (startAngle + endAngle) / 2);
+                    label.setAttribute('x', adjustedPos.x);
+                    label.setAttribute('y', adjustedPos.y);
+                }
+
+                svg.appendChild(path);
+                svg.appendChild(label);
+
+                currentAngle = endAngle;
+            });
+
+            // 綁定事件
+            bindEvents();
+        }
+
+        // 綁定事件
+        function bindEvents() {
+            const paths = Array.from(svg.querySelectorAll('path'));
+            let active = -1;
+            let charTimer = null;
+
+            function clearCharTimers() {
+                if (charTimer) clearTimeout(charTimer);
+                charTimer = null;
+            }
+
+            function ensureLayout() {
+                const wrapW = wrap.clientWidth;
+                const leftW = left.getBoundingClientRect().width;
+                const minInfo = 320;
+                const gap = 12;
+                if (wrapW + 1 < leftW + gap + minInfo) wrap.classList.add('stacked');
+                else wrap.classList.remove('stacked');
+            }
+
+            function showTextPerChar(text, color, mediaHTML) {
+                clearCharTimers();
+                ensureLayout();
+                infoBox.innerHTML = '';
+
+                const darker = darkenHex(color || '#000', 0.16);
+                const grad = `linear-gradient(90deg, ${color || '#000'} 0%, ${darker} 100%)`;
+
+                // 如果有媒體內容，先添加媒體容器
+                if (mediaHTML) {
+                    const mediaContainer = document.createElement('div');
+                    mediaContainer.className = 'media-container';
+                    mediaContainer.innerHTML = mediaHTML;
+                    infoBox.appendChild(mediaContainer);
+
+                    // 使用setTimeout觸發淡入動畫
+                    setTimeout(() => {
+                        mediaContainer.classList.add('show');
+                    }, 50);
+                }
+
+                // 添加文字容器
+                const container = document.createElement('div');
+                container.className = 'grad-text';
+                container.style.backgroundImage = grad;
+                container.style.fontSize = window.getComputedStyle(infoBox).fontSize || '20px';
+                container.style.paddingRight = '6px';
+                infoBox.appendChild(container);
+
+                let i = 0;
+                function step() {
+                    if (i > text.length) return;
+                    container.textContent = text.slice(0, i);
+                    i++;
+                    let delay = 30;
+                    if (text[i - 1] === '\n') delay = 120;
+                    charTimer = setTimeout(step, delay);
+                }
+                step();
+            }
+
+            function setActive(idx) {
+                clearCharTimers();
+                if (idx < 0 || idx >= paths.length) return;
+
+                // 重置其他扇形
+                paths.forEach((p, j) => {
+                    p.style.transform = 'scale(1)';
+                    p.style.filter = 'brightness(1)';
+                });
+
+                const p = paths[idx];
+                p.style.transform = 'scale(1.08)';
+                p.style.filter = 'brightness(1.06)';
+
+                // 顯示資訊
+                const label = p.getAttribute('data-label') || '';
+                const desc = p.getAttribute('data-desc') || '';
+                const mediaHTML = p.getAttribute('data-media') || '';
+                const value = Number(p.getAttribute('data-value') || 0);
+                const emojis = (p.getAttribute('data-emojis') || '').split(',').filter(e => e);
+                const total = getPieData().reduce((sum, item) => sum + item.value, 0);
+                const displayPercent = Math.round((value / total) * 100);
+                const infoText = `${label}：${displayPercent}%\n\n${desc}`;
+                showTextPerChar(infoText, p.getAttribute('fill') || '#000', mediaHTML);
+
+                // 觸發表情氣泡動畫
+                if (emojis.length > 0) {
+                    createBubbles(emojis,75);
+                }
+
+                try { p.blur(); } catch (e) { }
+                active = idx;
+            }
+
+            // 綁定事件（click / keyboard / pointer hover）
+            paths.forEach((p, i) => {
+                p.addEventListener('click', () => setActive(i));
+                p.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setActive(i);
+                    }
+                });
+                p.addEventListener('pointerenter', () => {
+                    // 若不是目前 active 則給小放大
+                    if (active !== i) p.style.transform = 'scale(1.04)';
+                });
+                p.addEventListener('pointerleave', () => {
+                    if (active !== i) p.style.transform = 'scale(1)';
+                    else p.style.transform = 'scale(1.08)';
+                });
+            });
+
+            // 鍵盤方向鍵切換（方便無障礙）
+            window.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    const next = (active + 1 + paths.length) % paths.length;
+                    setActive(next);
+                } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    const prev = (active - 1 + paths.length) % paths.length;
+                    setActive(prev);
+                }
+            });
+
+            // 初始選第一片
+            if (paths.length > 0) setActive(0);
+        }
+
+        // 初始化
+        drawPieChart();
+
+        // Resize 調整 stacked
+        let resizeTimer = null;
+        window.addEventListener('resize', () => {
+            if (resizeTimer) clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(() => {
+                const wrapW = wrap.clientWidth;
+                const leftW = left.getBoundingClientRect().width;
+                const minInfo = 320;
+                const gap = 12;
+                if (wrapW + 1 < leftW + gap + minInfo) wrap.classList.add('stacked');
+                else wrap.classList.remove('stacked');
+            }, 120);
+        });
+        window.addEventListener('load', () => {
+            const wrapW = wrap.clientWidth;
+            const leftW = left.getBoundingClientRect().width;
+            const minInfo = 320;
+            const gap = 12;
+            if (wrapW + 1 < leftW + gap + minInfo) wrap.classList.add('stacked');
+            else wrap.classList.remove('stacked');
+        });
+    </script>
+</body>
+
+</html>
